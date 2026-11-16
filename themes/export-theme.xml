@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tdoc-export-theme version="1">
+  <document page-size="A4" orientation="portrait">
+    <margins top="12mm" right="14mm" bottom="15mm" left="14mm"/>
+    <font family="Arial" size="11pt" color="#222222"/>
+    <heading level="1" size="20pt" color="#26384A" before="18pt" after="10pt"/>
+    <heading level="2" size="16pt" color="#365B78" before="14pt" after="8pt"/>
+    <heading level="3" size="13pt" color="#365B78" before="10pt" after="6pt"/>
+    <table border-color="#B8B8B8" header-background="#EAF0F5" cell-padding="5pt"/>
+    <image max-width="100%" alignment="center"/>
+  </document>
+  <interface>
+    <button radius="8px" accent="#365B78"/>
+  </interface>
+</tdoc-export-theme>

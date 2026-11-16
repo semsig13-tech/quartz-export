@@ -1,0 +1,3 @@
+/* Optional user overrides for the export dialog and PDF preview. */
+.tdoc-export-dialog { --tdoc-accent: var(--secondary); }
+.tdoc-export-primary { background: var(--tdoc-accent); }
