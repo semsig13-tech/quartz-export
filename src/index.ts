@@ -1,4 +1,5 @@
 import fs from "node:fs/promises"
+import fsSync from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import type { QuartzEmitterPlugin } from "@quartz-community/types"
@@ -90,7 +91,7 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
         themeXml: themePath ? sitePath(baseUrl, themePath) : "",
       }
       const clientPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "client.js")
-      const clientBundle = requireClientBundle(clientPath)
+      const clientBundle = fsSync.readFileSync(clientPath, "utf8")
       return {
         js: [{
           loadTime: "afterDOMReady",
@@ -101,11 +102,6 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
       }
     },
   }
-}
-
-function requireClientBundle(clientPath: string): string {
-  // The emitter module is loaded in Node; synchronous read keeps externalResources synchronous.
-  return (globalThis as any).__tdocExportReadFileSync(clientPath)
 }
 
 export default TdocExport
