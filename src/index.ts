@@ -7,7 +7,7 @@ import type { TdocExportOptions, ExportManifest, ExportDocument } from "./types.
 
 const DEFAULTS: Required<TdocExportOptions> = {
   manifestPath: "static/tdoc-export-index.json",
-  iconPath: "static/icon.svg",
+  iconPath: "static/tdoc-export.svg",
   toolbarSelector: ".search, .darkmode, .readermode",
   explorerSelector: ".explorer",
   includeDrafts: false,
