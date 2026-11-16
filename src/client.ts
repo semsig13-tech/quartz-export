@@ -4,6 +4,9 @@ import {
   ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle,
 } from "docx"
 import html2pdf from "html2pdf.js"
+import katex from "katex"
+import html2canvas from "html2canvas"
+import { jsPDF } from "jspdf"
 
 declare global {
   interface Window {
@@ -15,6 +18,7 @@ declare global {
       buttonLabel: string
       customCss?: string
       themeXml?: string
+      mathCss?: string
     }
   }
 }
@@ -41,6 +45,12 @@ async function boot(cfg: NonNullable<typeof config>) {
   const response = await fetch(cfg.manifestPath)
   if (!response.ok) throw new Error(`Не удалось загрузить индекс документов: ${response.status}`)
   const manifest = await response.json() as Manifest
+  if (cfg.mathCss) {
+    const mathLink = document.createElement("link")
+    mathLink.rel = "stylesheet"
+    mathLink.href = cfg.mathCss
+    document.head.append(mathLink)
+  }
   if (cfg.customCss) {
     const link = document.createElement("link")
     link.rel = "stylesheet"
@@ -299,7 +309,35 @@ async function loadTheme(url?: string): Promise<Theme> {
 }
 
 async function markdownHtml(doc: Doc) {
-  return await marked.parse(doc.markdown, { gfm: true, breaks: false })
+  let source = doc.markdown.replace(/!\\[\\[([^\\]|]+)(?:\\|([^\\]]+))?\\]\\]/g,
+    (_all, target: string, alt?: string) => "![ " + (alt ?? target.trim()) + " ](" + resolveAssetUrl(target.trim(), doc) + ")")
+  const math: Array<{ latex: string; display: boolean }> = []
+  source = source.replace(/\\$\\$([\\s\\S]+?)\\$\\$|\\\\\\[([\\s\\S]+?)\\\\\\]|\\\\\\(([\\s\\S]+?)\\\\\\)|(?<!\\$)\\$([^\\n$]+?)\\$(?!\\$)/g,
+    (_all, blockDollar: string, blockBracket: string, inlineParen: string, inlineDollar: string) => {
+      const display = blockDollar !== undefined || blockBracket !== undefined
+      const latex = blockDollar ?? blockBracket ?? inlineParen ?? inlineDollar ?? ""
+      const token = "TDOCMATHPLACEHOLDER" + math.length + "END"
+      math.push({ latex, display })
+      return display ? "\\n\\n" + token + "\\n\\n" : token
+    })
+  let html = await marked.parse(source, { gfm: true, breaks: false })
+  math.forEach((item, index) => {
+    const rendered = katex.renderToString(item.latex, { displayMode: item.display, throwOnError: false, strict: "ignore" })
+    html = html.replaceAll("TDOCMATHPLACEHOLDER" + index + "END", rendered)
+  })
+  return html
+}
+
+function resolveAssetUrl(source: string, doc: Doc) {
+  const cleaned = source.trim().replace(/^<|>$/g, "").replace(/\\\\/g, "/")
+  if (/^(https?:|data:|blob:)/i.test(cleaned)) return cleaned
+  const pageUrl = new URL(doc.url, location.origin)
+  const segments = pageUrl.pathname.split("/").filter(Boolean)
+  const prefix = segments.length > 1 ? "/" + segments[0] : ""
+  const target = cleaned.replace(/^\\/+/, "")
+  if (cleaned.startsWith(prefix + "/")) return new URL(cleaned, location.origin).href
+  if (/^(media|files|static)\\//i.test(target)) return new URL(prefix + "/" + target, location.origin).href
+  return new URL(target, pageUrl).href
 }
 
 async function exportDocx(docs: Doc[], options: ExportOptions, theme: Theme) {
@@ -488,14 +526,29 @@ async function exportPdf(docs: Doc[], options: ExportOptions, theme: Theme) {
   document.body.append(wrapper)
   try {
     await Promise.all([...wrapper.querySelectorAll("img")].map((img) => img.decode().catch(() => undefined)))
-    await (html2pdf() as any).set({
-      margin: theme.margins,
-      filename: makeFilename(docs, "pdf"),
-      image: { type: "jpeg", quality: .96 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: false, logging: false },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"] },
-    }).from(wrapper).save()
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true })
+    const [top, right, bottom, left] = theme.margins
+    const pageWidth = 210 - left - right
+    const pageHeight = 297 - top - bottom
+    let hasPage = false
+    for (const target of [...wrapper.children] as HTMLElement[]) {
+      const canvas = await html2canvas(target, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: "#ffffff", logging: false, windowWidth: Math.max(900, wrapper.scrollWidth), scrollX: 0, scrollY: 0 })
+      if (!canvas.width || !canvas.height) continue
+      const sliceHeight = Math.max(1, Math.floor(canvas.width * pageHeight / pageWidth))
+      for (let offset = 0; offset < canvas.height; offset += sliceHeight) {
+        if (hasPage) pdf.addPage()
+        const height = Math.min(sliceHeight, canvas.height - offset)
+        const slice = document.createElement("canvas")
+        slice.width = canvas.width
+        slice.height = height
+        slice.getContext("2d")!.drawImage(canvas, 0, offset, canvas.width, height, 0, 0, canvas.width, height)
+        pdf.addImage(slice.toDataURL("image/jpeg", 0.94), "JPEG", left, top, pageWidth, height * pageWidth / canvas.width, undefined, "FAST")
+        hasPage = true
+      }
+    }
+    if (!hasPage) throw new Error("Не удалось отрисовать содержимое PDF.")
+    pdf.save(makeFilename(docs, "pdf"))
   } finally {
     wrapper.remove()
   }
