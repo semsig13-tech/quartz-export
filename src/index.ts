@@ -66,7 +66,7 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
         if (!file || typeof file !== "object") return []
 
         const data = file.data ?? {}
-        const slug = String(data.slug ?? data.relativePath ?? "").replace(/^\\/+|\\/+$/g, "")
+        const slug = String(data.slug ?? data.relativePath ?? "").replace(/^\/+|\/+$/g, "")
         if (!slug || slug.startsWith("tags/")) return []
 
         const frontmatter = data.frontmatter ?? {}
