@@ -33,8 +33,7 @@
     "@quartz-community/types": "^1.0.0",
     "@types/node": "^22.13.10",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.3",
-    "@types/html2pdf.js": "^0.10.3"
+    "typescript": "^5.9.3"
   },
   "quartz": {
     "name": "tdoc-export",
