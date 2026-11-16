@@ -235,6 +235,7 @@ function selectExplorerEntries(tree: HTMLElement, docs: Doc[], selector: string)
   const explorer = document.querySelector(selector)
   if (!explorer) return
   const hrefs = new Set([...explorer.querySelectorAll<HTMLAnchorElement>(".explorer-content a[href], a[href]")]
+    .filter((anchor) => anchor.getClientRects().length > 0)
     .map((anchor) => {
       try { return normalizePath(new URL(anchor.getAttribute("href")!, location.href).pathname) }
       catch { return "" }
@@ -406,8 +407,10 @@ async function inlineRuns(node: Element, doc: Doc, includeImages: boolean): Prom
         const response = await fetch(url, { mode: "cors" })
         if (!response.ok) throw new Error(String(response.status))
         const bytes = new Uint8Array(await response.arrayBuffer())
-        const mime = response.headers.get("content-type") ?? ""
-        if (!mime.startsWith("image/")) throw new Error("URL не вернул изображение")
+        const mime = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase()
+        if (!["image/png", "image/jpeg", "image/gif", "image/bmp"].includes(mime)) {
+          throw new Error("Формат изображения не поддерживается DOCX")
+        }
         const size = await imageDimensions(bytes, mime)
         const scale = Math.min(1, 520 / size.width, 680 / size.height)
         runs.push(new ImageRun({ data: bytes, transformation: { width: Math.max(1, size.width * scale), height: Math.max(1, size.height * scale) } }))
