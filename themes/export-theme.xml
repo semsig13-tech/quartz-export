@@ -9,7 +9,5 @@
     <table border-color="#B8B8B8" header-background="#EAF0F5" cell-padding="5pt"/>
     <image max-width="100%" alignment="center"/>
   </document>
-  <interface>
-    <button radius="8px" accent="#365B78"/>
-  </interface>
+  <interface><button radius="8px" accent="#365B78"/></interface>
 </tdoc-export-theme>
