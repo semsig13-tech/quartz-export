@@ -428,7 +428,7 @@ async function inlineRuns(node: Element, doc: Doc, includeImages: boolean): Prom
 }
 
 async function imageDimensions(bytes: Uint8Array, mime: string): Promise<{ width: number; height: number }> {
-  const blob = new Blob([bytes], { type: mime })
+  const blob = new Blob([bytes.slice().buffer as ArrayBuffer], { type: mime })
   const url = URL.createObjectURL(blob)
   try {
     const image = new Image()
@@ -448,14 +448,20 @@ async function exportPdf(docs: Doc[], options: ExportOptions, theme: Theme) {
         `<li><strong>${escapeHtml(doc.title)}</strong><ol>${[...doc.markdown.matchAll(/^#{1,3}\s+(.+)$/gm)]
           .map((match) => `<li>${escapeHtml(match[1].replace(/[#*_`]/g, ""))}</li>`).join("")}</ol></li>`).join("")}</ol></nav>`
     : ""
-  const pages = await Promise.all(docs.map(async (doc, index) =>
-    `<section class="tdoc-export-page ${index ? "tdoc-export-break" : ""}">
-      <h1>${escapeHtml(doc.title)}</h1>${await markdownHtml(doc)}</section>`))
+  const pages = await Promise.all(docs.map(async (doc, index) => {
+    const parsed = new DOMParser().parseFromString(await markdownHtml(doc), "text/html")
+    parsed.querySelectorAll<HTMLImageElement>("img[src]").forEach((image) => {
+      try {
+        image.setAttribute("src", new URL(image.getAttribute("src")!, new URL(doc.url, location.origin)).href)
+      } catch {}
+    })
+    return `<section class="tdoc-export-page ${index ? "tdoc-export-break" : ""}">
+      <h1>${escapeHtml(doc.title)}</h1>${parsed.body.innerHTML}</section>`
+  }))
   wrapper.innerHTML = contents + pages.join("")
   if (!options.images) wrapper.querySelectorAll("img").forEach((image) => image.remove())
   wrapper.querySelectorAll<HTMLImageElement>("img").forEach((image) => {
     image.crossOrigin = "anonymous"
-    if (!image.src.startsWith("data:")) image.src = new URL(image.getAttribute("src") ?? "", new URL(docs[0]?.url ?? "/", location.origin)).href
   })
   const style = document.createElement("style")
   style.textContent = `
