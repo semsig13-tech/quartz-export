@@ -413,7 +413,8 @@ async function inlineRuns(node: Element, doc: Doc, includeImages: boolean): Prom
         }
         const size = await imageDimensions(bytes, mime)
         const scale = Math.min(1, 520 / size.width, 680 / size.height)
-        runs.push(new ImageRun({ data: bytes, transformation: { width: Math.max(1, size.width * scale), height: Math.max(1, size.height * scale) } }))
+        const imageType = mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : mime === "image/gif" ? "gif" : "bmp"
+        runs.push(new ImageRun({ type: imageType, data: bytes, transformation: { width: Math.max(1, size.width * scale), height: Math.max(1, size.height * scale) } }))
       } catch {
         runs.push(new TextRun({ text: `[Изображение недоступно: ${current.getAttribute("alt") ?? src}]` }))
       }
