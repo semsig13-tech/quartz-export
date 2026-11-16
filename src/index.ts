@@ -57,17 +57,25 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
     name: "TdocExport",
     async emit(ctx, content) {
       const baseUrl = String(ctx.cfg.configuration.baseUrl ?? "")
-      const documents: ExportDocument[] = content.map(([, file]) => {
-        const data = file.data as Record<string, any>
-        const slug = String(data.slug ?? "").replace(/^\/+|\/+$/g, "")
+      // Quartz may append virtual pages (plain objects) to the processed
+      // Markdown tuples before calling emitters. Only real VFile tuples can be
+      // exported; virtual pages do not contain a source Markdown file.
+      const documents: ExportDocument[] = (content as unknown[]).flatMap((entry) => {
+        if (!Array.isArray(entry) || entry.length < 2) return []
+        const file = entry[1] as { data?: Record<string, any>; value?: unknown } | undefined
+        if (!file || typeof file !== "object") return []
+
+        const data = file.data ?? {}
+        const slug = String(data.slug ?? data.relativePath ?? "").replace(/^\\/+|\\/+$/g, "")
+        if (!slug || slug.startsWith("tags/")) return []
+
         const frontmatter = data.frontmatter ?? {}
+        if (!options.includeDrafts && frontmatter.draft === true) return []
+
         const title = String(frontmatter.title ?? data.title ?? path.posix.basename(slug))
         const folder = path.posix.dirname(slug) === "." ? "" : path.posix.dirname(slug)
-        return { slug, title, folder, markdown: file.value.toString(), url: sitePath(baseUrl, slug) }
-      }).filter((doc) => {
-        const source = content.find(([, file]) => String((file.data as any).slug ?? "").replace(/^\/+|\/+$/g, "") === doc.slug)?.[1]
-        const frontmatter = (source?.data as any)?.frontmatter ?? {}
-        return Boolean(doc.slug) && !doc.slug.startsWith("tags/") && (options.includeDrafts || frontmatter.draft !== true)
+        const markdown = typeof file.value === "string" ? file.value : String(file.value ?? "")
+        return [{ slug, title, folder, markdown, url: sitePath(baseUrl, slug) }]
       }).sort((a, b) => a.slug.localeCompare(b.slug, "ru"))
 
       const manifest: ExportManifest = {
