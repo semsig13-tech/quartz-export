@@ -125,7 +125,7 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
       const clientConfig = makeClientConfig(baseUrl, {
         manifestPath, iconPath, toolbarSelector: options.toolbarSelector,
         explorerSelector: options.explorerSelector, buttonLabel: options.buttonLabel,
-        customCss: cssPath, themeXml: themePath,
+        customCss: cssPath, themeXml: themePath, mathCss: "static/katex/katex.min.css",
       })
       await writeAsset("static/tdoc-export.js", `window.__TDOC_EXPORT_CONFIG__=${JSON.stringify(clientConfig)};\n${clientBundle}`)
       return outputFiles as any
