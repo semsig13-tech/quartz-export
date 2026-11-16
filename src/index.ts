@@ -34,6 +34,7 @@ function makeClientConfig(baseUrl: string, options: {
   buttonLabel: string
   customCss: string
   themeXml: string
+  mathCss: string
 }) {
   return {
     manifestPath: sitePath(baseUrl, options.manifestPath),
@@ -43,6 +44,7 @@ function makeClientConfig(baseUrl: string, options: {
     buttonLabel: options.buttonLabel,
     customCss: options.customCss ? sitePath(baseUrl, options.customCss) : "",
     themeXml: options.themeXml ? sitePath(baseUrl, options.themeXml) : "",
+    mathCss: sitePath(baseUrl, "static/katex/katex.min.css"),
   }
 }
 
@@ -105,6 +107,9 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
       await copyAsset(path.join(pluginRoot, "../static/icon.svg"), iconPath)
       if (cssPath) await copyAsset(path.join(pluginRoot, "../static/export.css"), cssPath)
       if (themePath) await copyAsset(path.join(pluginRoot, "../themes/export-theme.xml"), themePath)
+      await copyAsset(path.join(pluginRoot, "../node_modules/katex/dist/katex.min.css"), "static/katex/katex.min.css")
+      await fs.cp(path.join(pluginRoot, "../node_modules/katex/dist/fonts"), path.join(outputRoot, "static/katex/fonts"), { recursive: true })
+      outputFiles.push(path.join(outputRoot, "static/katex/katex.min.css"))
 
       // Publish a self-contained browser script with the site-specific settings prepended.
       const clientBundle = await fs.readFile(path.join(pluginRoot, "client.js"), "utf8")
