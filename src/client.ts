@@ -438,23 +438,46 @@ async function inlineRuns(node: Element, doc: Doc, includeImages: boolean): Prom
     }
     if (!(current instanceof Element)) return
     const tag = current.tagName.toLowerCase()
+    if (current.classList.contains("katex")) {
+      try {
+        const holder = document.createElement("div")
+        holder.style.cssText = "position:fixed;left:-10000px;top:0;background:#fff;color:#000;padding:5px;font-size:18px"
+        holder.innerHTML = current.outerHTML
+        document.body.append(holder)
+        const canvas = await html2canvas(holder, { backgroundColor: "#ffffff", scale: 2 })
+        holder.remove()
+        const bytes = new Uint8Array(await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer())
+        const factor = Math.min(1, 520 / canvas.width)
+        runs.push(new ImageRun({ type: "png", data: bytes, transformation: { width: Math.max(1, canvas.width * factor), height: Math.max(1, canvas.height * factor) } }))
+      } catch { runs.push(new TextRun({ text: current.textContent ?? "" })) }
+      return
+    }
     if (tag === "img" && includeImages) {
       const src = current.getAttribute("src") ?? ""
       try {
-        const url = new URL(src, new URL(doc.url, location.origin)).href
-        const response = await fetch(url, { mode: "cors" })
+        const response = await fetch(resolveAssetUrl(src, doc), { mode: "cors", credentials: "same-origin" })
         if (!response.ok) throw new Error(String(response.status))
-        const bytes = new Uint8Array(await response.arrayBuffer())
-        const mime = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase()
-        if (!["image/png", "image/jpeg", "image/gif", "image/bmp"].includes(mime)) {
-          throw new Error("Формат изображения не поддерживается DOCX")
-        }
-        const size = await imageDimensions(bytes, mime)
-        const scale = Math.min(1, 520 / size.width, 680 / size.height)
-        const imageType = mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : mime === "image/gif" ? "gif" : "bmp"
-        runs.push(new ImageRun({ type: imageType, data: bytes, transformation: { width: Math.max(1, size.width * scale), height: Math.max(1, size.height * scale) } }))
+        const blob = await response.blob()
+        const objectUrl = URL.createObjectURL(blob)
+        try {
+          const image = new Image()
+          image.src = objectUrl
+          await image.decode()
+          const factor = Math.min(1, 1400 / image.naturalWidth, 1800 / image.naturalHeight)
+          const canvas = document.createElement("canvas")
+          canvas.width = Math.max(1, Math.round(image.naturalWidth * factor))
+          canvas.height = Math.max(1, Math.round(image.naturalHeight * factor))
+          const context = canvas.getContext("2d")!
+          context.fillStyle = "#ffffff"
+          context.fillRect(0, 0, canvas.width, canvas.height)
+          context.drawImage(image, 0, 0, canvas.width, canvas.height)
+          const png = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("PNG conversion failed")), "image/png"))
+          const bytes = new Uint8Array(await png.arrayBuffer())
+          const scale = Math.min(1, 520 / canvas.width, 680 / canvas.height)
+          runs.push(new ImageRun({ type: "png", data: bytes, transformation: { width: Math.max(1, canvas.width * scale), height: Math.max(1, canvas.height * scale) } }))
+        } finally { URL.revokeObjectURL(objectUrl) }
       } catch {
-        runs.push(new TextRun({ text: `[Изображение недоступно: ${current.getAttribute("alt") ?? src}]` }))
+        runs.push(new TextRun({ text: "[Изображение недоступно: " + (current.getAttribute("alt") ?? src) + "]" }))
       }
       return
     }
@@ -485,6 +508,7 @@ async function imageDimensions(bytes: Uint8Array, mime: string): Promise<{ width
 async function exportPdf(docs: Doc[], options: ExportOptions, theme: Theme) {
   const wrapper = document.createElement("article")
   wrapper.className = "tdoc-export-print"
+  wrapper.style.cssText = "position:fixed;left:0;top:0;z-index:-1;width:182mm;background:#fff;color:#222;padding:0;box-sizing:border-box"
   const contents = options.toc
     ? `<nav class="tdoc-export-toc"><h1>Содержание</h1><ol>${docs.map((doc) =>
         `<li><strong>${escapeHtml(doc.title)}</strong><ol>${[...doc.markdown.matchAll(/^#{1,3}\s+(.+)$/gm)]
@@ -494,7 +518,7 @@ async function exportPdf(docs: Doc[], options: ExportOptions, theme: Theme) {
     const parsed = new DOMParser().parseFromString(await markdownHtml(doc), "text/html")
     parsed.querySelectorAll<HTMLImageElement>("img[src]").forEach((image) => {
       try {
-        image.setAttribute("src", new URL(image.getAttribute("src")!, new URL(doc.url, location.origin)).href)
+        image.setAttribute("src", resolveAssetUrl(image.getAttribute("src")!, doc))
       } catch {}
     })
     return `<section class="tdoc-export-page ${index ? "tdoc-export-break" : ""}">
