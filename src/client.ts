@@ -364,8 +364,11 @@ async function htmlToDocxBlocks(html: string, doc: Doc, includeImages: boolean, 
         spacing: { after: 120 },
       }))
     } else if (tag === "ul" || tag === "ol") {
-      for (const li of [...node.querySelectorAll(":scope > li")]) {
-        result.push(new Paragraph({ children: await inlineRuns(li, doc, includeImages), bullet: tag === "ul" ? { level: 0 } : undefined, numbering: tag === "ol" ? { reference: "tdoc-numbering", level: 0 } : undefined, spacing: { after: 60 } }))
+      const items = [...node.querySelectorAll(":scope > li")]
+      for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+        const runs = await inlineRuns(items[itemIndex], doc, includeImages)
+        if (tag === "ol") runs.unshift(new TextRun({ text: `${itemIndex + 1}. ` }))
+        result.push(new Paragraph({ children: runs, bullet: tag === "ul" ? { level: 0 } : undefined, spacing: { after: 60 } }))
       }
     } else if (tag === "table") {
       const rows = [...node.querySelectorAll("tr")].map((tr) => new TableRow({
