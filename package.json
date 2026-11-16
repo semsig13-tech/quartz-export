@@ -12,7 +12,13 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "static", "themes", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "static",
+    "themes",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
@@ -24,10 +30,11 @@
     "marked": "^15.0.12"
   },
   "devDependencies": {
-    "@quartz-community/types": "^0.3.0",
+    "@quartz-community/types": "^1.0.0",
     "@types/node": "^22.13.10",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/html2pdf.js": "^0.10.3"
   },
   "quartz": {
     "name": "tdoc-export",
@@ -50,14 +57,30 @@
       "includeDrafts": false
     },
     "configSchema": {
-      "manifestPath": { "type": "string" },
-      "iconPath": { "type": "string" },
-      "toolbarSelector": { "type": "string" },
-      "explorerSelector": { "type": "string" },
-      "buttonLabel": { "type": "string" },
-      "customCss": { "type": "string" },
-      "themeXml": { "type": "string" },
-      "includeDrafts": { "type": "boolean" }
+      "manifestPath": {
+        "type": "string"
+      },
+      "iconPath": {
+        "type": "string"
+      },
+      "toolbarSelector": {
+        "type": "string"
+      },
+      "explorerSelector": {
+        "type": "string"
+      },
+      "buttonLabel": {
+        "type": "string"
+      },
+      "customCss": {
+        "type": "string"
+      },
+      "themeXml": {
+        "type": "string"
+      },
+      "includeDrafts": {
+        "type": "boolean"
+      }
     }
   }
 }
