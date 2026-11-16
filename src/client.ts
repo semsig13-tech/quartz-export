@@ -309,16 +309,16 @@ async function loadTheme(url?: string): Promise<Theme> {
 }
 
 async function markdownHtml(doc: Doc) {
-  let source = doc.markdown.replace(/!\\[\\[([^\\]|]+)(?:\\|([^\\]]+))?\\]\\]/g,
-    (_all, target: string, alt?: string) => "![ " + (alt ?? target.trim()) + " ](" + resolveAssetUrl(target.trim(), doc) + ")")
+  let source = doc.markdown.replace(/!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+    (_all, target: string, alt?: string) => "![" + (alt ?? target.trim()) + "](" + resolveAssetUrl(target.trim(), doc) + ")")
   const math: Array<{ latex: string; display: boolean }> = []
-  source = source.replace(/\\$\\$([\\s\\S]+?)\\$\\$|\\\\\\[([\\s\\S]+?)\\\\\\]|\\\\\\(([\\s\\S]+?)\\\\\\)|(?<!\\$)\\$([^\\n$]+?)\\$(?!\\$)/g,
+  source = source.replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|(?<!\$)\$([^\n$]+?)\$(?!\$)/g,
     (_all, blockDollar: string, blockBracket: string, inlineParen: string, inlineDollar: string) => {
       const display = blockDollar !== undefined || blockBracket !== undefined
       const latex = blockDollar ?? blockBracket ?? inlineParen ?? inlineDollar ?? ""
       const token = "TDOCMATHPLACEHOLDER" + math.length + "END"
       math.push({ latex, display })
-      return display ? "\\n\\n" + token + "\\n\\n" : token
+      return display ? "\n\n" + token + "\n\n" : token
     })
   let html = await marked.parse(source, { gfm: true, breaks: false })
   math.forEach((item, index) => {
@@ -329,14 +329,14 @@ async function markdownHtml(doc: Doc) {
 }
 
 function resolveAssetUrl(source: string, doc: Doc) {
-  const cleaned = source.trim().replace(/^<|>$/g, "").replace(/\\\\/g, "/")
+  const cleaned = source.trim().replace(/^<|>$/g, "").replace(/\\/g, "/")
   if (/^(https?:|data:|blob:)/i.test(cleaned)) return cleaned
   const pageUrl = new URL(doc.url, location.origin)
   const segments = pageUrl.pathname.split("/").filter(Boolean)
   const prefix = segments.length > 1 ? "/" + segments[0] : ""
-  const target = cleaned.replace(/^\\/+/, "")
+  const target = cleaned.replace(/^\/+/, "")
   if (cleaned.startsWith(prefix + "/")) return new URL(cleaned, location.origin).href
-  if (/^(media|files|static)\\//i.test(target)) return new URL(prefix + "/" + target, location.origin).href
+  if (/^(media|files|static)\//i.test(target)) return new URL(prefix + "/" + target, location.origin).href
   return new URL(target, pageUrl).href
 }
 
@@ -546,7 +546,7 @@ async function exportPdf(docs: Doc[], options: ExportOptions, theme: Theme) {
     .tdoc-export-toc{page-break-after:always;break-after:page}
     .tdoc-export-toc li{margin:.2rem 0}
   `
-  wrapper.prepend(style)
+  document.head.append(style)
   document.body.append(wrapper)
   try {
     await Promise.all([...wrapper.querySelectorAll("img")].map((img) => img.decode().catch(() => undefined)))
