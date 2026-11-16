@@ -1,15 +1,22 @@
 {
   "name": "quartz-export",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
-  "description": "Client-side DOCX/PDF export for Quartz v5 sites",
+  "description": "Export selected TDOC / Quartz Markdown documents to DOCX and PDF in the browser",
   "type": "module",
-  "exports": { ".": "./dist/index.js" },
-  "files": ["dist", "src", "static", "README.md", "LICENSE"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "static", "themes", "README.md", "LICENSE"],
   "scripts": {
-    "build": "tsup src/index.ts src/client.ts --format esm --dts --clean --out-dir dist --external @quartz-community/types",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "node --test"
   },
   "dependencies": {
     "docx": "^9.5.1",
@@ -17,10 +24,40 @@
     "marked": "^15.0.12"
   },
   "devDependencies": {
-    "@quartz-community/types": "^1.0.0",
+    "@quartz-community/types": "^0.3.0",
     "@types/node": "^22.13.10",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.8"
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "quartz": {
+    "name": "tdoc-export",
+    "displayName": "TDOC Export",
+    "description": "Export selected TDOC Markdown documents and images to DOCX or PDF",
+    "version": "0.2.0",
+    "category": "emitter",
+    "quartzVersion": ">=5.0.0",
+    "dependencies": [],
+    "defaultOrder": 95,
+    "defaultEnabled": false,
+    "defaultOptions": {
+      "manifestPath": "static/tdoc-export-index.json",
+      "iconPath": "static/icon.svg",
+      "toolbarSelector": ".search, .darkmode, .readermode",
+      "explorerSelector": ".explorer",
+      "buttonLabel": "Экспорт",
+      "customCss": "static/export.css",
+      "themeXml": "themes/export-theme.xml",
+      "includeDrafts": false
+    },
+    "configSchema": {
+      "manifestPath": { "type": "string" },
+      "iconPath": { "type": "string" },
+      "toolbarSelector": { "type": "string" },
+      "explorerSelector": { "type": "string" },
+      "buttonLabel": { "type": "string" },
+      "customCss": { "type": "string" },
+      "themeXml": { "type": "string" },
+      "includeDrafts": { "type": "boolean" }
+    }
   }
 }
