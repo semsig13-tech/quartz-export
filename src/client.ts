@@ -575,6 +575,7 @@ async function exportPdf(docs: Doc[], options: ExportOptions, theme: Theme) {
     pdf.save(makeFilename(docs, "pdf"))
   } finally {
     wrapper.remove()
+    style.remove()
   }
 }
 
