@@ -108,8 +108,17 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
       if (cssPath) await copyAsset(path.join(pluginRoot, "../static/export.css"), cssPath)
       if (themePath) await copyAsset(path.join(pluginRoot, "../themes/export-theme.xml"), themePath)
       await copyAsset(path.join(pluginRoot, "../node_modules/katex/dist/katex.min.css"), "static/katex/katex.min.css")
-      await fs.cp(path.join(pluginRoot, "../node_modules/katex/dist/fonts"), path.join(outputRoot, "static/katex/fonts"), { recursive: true })
+      const fontOutput = path.join(outputRoot, "static/katex/fonts")
+      await fs.cp(path.join(pluginRoot, "../node_modules/katex/dist/fonts"), fontOutput, { recursive: true })
       outputFiles.push(path.join(outputRoot, "static/katex/katex.min.css"))
+      const collectFontFiles = async (directory: string): Promise<void> => {
+        for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
+          const target = path.join(directory, entry.name)
+          if (entry.isDirectory()) await collectFontFiles(target)
+          else outputFiles.push(target)
+        }
+      }
+      await collectFontFiles(fontOutput)
 
       // Publish a self-contained browser script with the site-specific settings prepended.
       const clientBundle = await fs.readFile(path.join(pluginRoot, "client.js"), "utf8")
