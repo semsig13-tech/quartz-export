@@ -1,3 +1,10 @@
-/* Optional user overrides for the export dialog and PDF preview. */
-.tdoc-export-dialog { --tdoc-accent: var(--secondary); }
-.tdoc-export-primary { background: var(--tdoc-accent); }
+/* Optional overrides for the TDOC Export interface. */
+.tdoc-export-trigger { min-height: 2.2rem; }
+.tdoc-export-dialog { color-scheme: light dark; }
+.tdoc-export-dialog button:focus-visible,
+.tdoc-export-dialog input:focus-visible,
+.tdoc-export-dialog select:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+.tdoc-export-primary { background: var(--secondary); color: #fff; }
