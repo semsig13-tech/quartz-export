@@ -23,7 +23,7 @@
     order: 95
     options:
       manifestPath: static/tdoc-export-index.json
-      iconPath: static/icon.svg
+      iconPath: static/tdoc-export.svg
       toolbarSelector: ".search, .darkmode, .readermode"
       explorerSelector: ".explorer"
       buttonLabel: "Экспорт"
