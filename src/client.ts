@@ -42,21 +42,9 @@ if (config) void boot(config).catch((error) => console.error("TDOC Export:", err
 
 async function boot(cfg: NonNullable<typeof config>) {
   if (document.getElementById("tdoc-export-button")) return
-  const response = await fetch(cfg.manifestPath)
-  if (!response.ok) throw new Error(`Не удалось загрузить индекс документов: ${response.status}`)
-  const manifest = await response.json() as Manifest
-  if (cfg.mathCss) {
-    const mathLink = document.createElement("link")
-    mathLink.rel = "stylesheet"
-    mathLink.href = cfg.mathCss
-    document.head.append(mathLink)
-  }
-  if (cfg.customCss) {
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
-    link.href = cfg.customCss
-    document.head.append(link)
-  }
+
+  // The export control must remain visible even if the manifest or optional
+  // stylesheets fail to load. Fetch the document index only after a click.
   injectStyles()
   const button = document.createElement("button")
   button.id = "tdoc-export-button"
@@ -66,10 +54,36 @@ async function boot(cfg: NonNullable<typeof config>) {
   const icon = document.createElement("img")
   icon.alt = ""
   icon.src = cfg.iconPath
+  icon.onerror = () => { icon.remove() }
   const label = document.createElement("span")
   label.textContent = cfg.buttonLabel
   button.append(icon, label)
-  button.addEventListener("click", () => openDialog(manifest, cfg))
+  button.addEventListener("click", async () => {
+    button.disabled = true
+    try {
+      const response = await fetch(cfg.manifestPath)
+      if (!response.ok) throw new Error(`Не удалось загрузить индекс документов: ${response.status}`)
+      const manifest = await response.json() as Manifest
+      if (cfg.mathCss && !document.querySelector(`link[href="${cfg.mathCss}"]`)) {
+        const mathLink = document.createElement("link")
+        mathLink.rel = "stylesheet"
+        mathLink.href = cfg.mathCss
+        document.head.append(mathLink)
+      }
+      if (cfg.customCss && !document.querySelector(`link[href="${cfg.customCss}"]`)) {
+        const link = document.createElement("link")
+        link.rel = "stylesheet"
+        link.href = cfg.customCss
+        document.head.append(link)
+      }
+      openDialog(manifest, cfg)
+    } catch (error) {
+      console.error("TDOC Export:", error)
+      window.alert(`Не удалось открыть экспорт: ${error instanceof Error ? error.message : String(error)}`)
+    } finally {
+      button.disabled = false
+    }
+  })
   mountButton(button, cfg.toolbarSelector)
   const observer = new MutationObserver(() => mountButton(button, cfg.toolbarSelector))
   observer.observe(document.body, { childList: true, subtree: true })
@@ -80,7 +94,13 @@ function mountButton(button: HTMLButtonElement, selector: string) {
   const control = selector.split(",").map((s) => s.trim()).filter(Boolean)
     .map((s) => document.querySelector(s)).find((node): node is Element => Boolean(node))
   const target = control?.parentElement ?? document.querySelector(".left, .toolbar, header, .header")
-  if (target) target.append(button)
+  if (target) {
+    button.classList.remove("tdoc-export-floating")
+    target.append(button)
+  } else {
+    button.classList.add("tdoc-export-floating")
+    document.body.append(button)
+  }
 }
 
 function injectStyles() {
@@ -93,6 +113,8 @@ function injectStyles() {
       background:var(--light);color:var(--dark);cursor:pointer;font:inherit;font-size:.9rem}
     .tdoc-export-trigger:hover{background:var(--highlight);border-color:var(--secondary)}
     .tdoc-export-trigger img{width:18px;height:18px;object-fit:contain}
+    .tdoc-export-trigger.tdoc-export-floating{position:fixed;right:1rem;bottom:1rem;z-index:9999;
+      box-shadow:0 3px 14px #0003}
     .tdoc-export-backdrop{position:fixed;inset:0;z-index:10000;background:#0008;display:grid;
       place-items:center;padding:1rem}
     .tdoc-export-dialog{box-sizing:border-box;width:min(780px,96vw);max-height:90vh;overflow:auto;
