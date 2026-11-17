@@ -23,7 +23,7 @@ export default defineConfig([
     minify: true,
     target: "es2022",
     platform: "browser",
-    noExternal: ["docx", "html2pdf.js", "marked"],
+    noExternal: ["docx", "html2pdf.js", "marked", "katex", "html2canvas", "jspdf"],
     outDir: "dist",
   },
 ])
