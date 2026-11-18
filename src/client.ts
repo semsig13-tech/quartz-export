@@ -23,7 +23,7 @@ type Doc = { slug: string; title: string; folder: string; markdown: string; url:
 type Manifest = { version: 1; generatedAt: string; siteBaseUrl: string; documents: Doc[] }
 
 const cfg = window.__TDOC_EXPORT_CONFIG__
-if (cfg) void boot(cfg)
+if (cfg) void boot(cfg).catch(err => console.warn("TDOC Export disabled; site remains available.", err))
 
 async function boot(config: NonNullable<typeof cfg>) {
   if (document.getElementById("tdoc-export-button")) return
@@ -53,15 +53,29 @@ async function boot(config: NonNullable<typeof cfg>) {
 }
 
 function mountButton(button: HTMLButtonElement, selector: string) {
-  if (button.isConnected) return
-  const candidates = selector.split(",").map(s => s.trim()).filter(Boolean)
-  const target = candidates.map(s => document.querySelector(s)).find(Boolean)
-  if (!target) {
-    const right = document.querySelector(".right, .header, header")
-    if (right) right.append(button)
-    return
+  const selectors = selector.split(",").map(s => s.trim()).filter(Boolean)
+  const controls = selectors.map(s => document.querySelector(s)).filter((el): el is Element => !!el)
+  if (!controls.length) return
+
+  // Find the lowest shared container for the existing toolbar controls.
+  // The export row is inserted after that container, never inside search/icons.
+  let toolbarContainer: Element | null = controls[0]
+  while (toolbarContainer && !controls.every(el => toolbarContainer!.contains(el))) {
+    toolbarContainer = toolbarContainer.parentElement
   }
-  target.append(button)
+  if (!toolbarContainer) return
+
+  let row = document.getElementById("tdoc-export-row")
+  if (!row) {
+    row = document.createElement("div")
+    row.id = "tdoc-export-row"
+    row.className = "tdoc-export-row"
+    toolbarContainer.insertAdjacentElement("afterend", row)
+  } else if (!row.isConnected) {
+    toolbarContainer.insertAdjacentElement("afterend", row)
+  }
+
+  if (button.parentElement !== row) row.append(button)
 }
 
 function injectStyles() {
@@ -90,7 +104,7 @@ function injectStyles() {
     .tdoc-export-footer{display:flex;justify-content:space-between;gap:.8rem;align-items:center;flex-wrap:wrap;margin-top:1rem}
     .tdoc-export-close{float:right;border:0;background:transparent;color:var(--dark);font-size:1.4rem;cursor:pointer}
     .tdoc-export-status{min-height:1.3em;margin-top:.5rem;color:var(--secondary);font-size:.9rem}
-    @media(max-width:600px){.tdoc-export-trigger span{display:none}.tdoc-export-dialog{padding:.9rem}}
+    @media(max-width:600px){.tdoc-export-trigger{min-height:44px}.tdoc-export-dialog{padding:.9rem}}
   `
   document.head.append(style)
 }
