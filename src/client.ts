@@ -90,17 +90,28 @@ async function boot(cfg: NonNullable<typeof config>) {
 }
 
 function mountButton(button: HTMLButtonElement, selector: string) {
-  if (button.isConnected) return
-  const control = selector.split(",").map((s) => s.trim()).filter(Boolean)
-    .map((s) => document.querySelector(s)).find((node): node is Element => Boolean(node))
-  const target = control?.parentElement ?? document.querySelector(".left, .toolbar, header, .header")
-  if (target) {
-    button.classList.remove("tdoc-export-floating")
-    target.append(button)
-  } else {
-    button.classList.add("tdoc-export-floating")
-    document.body.append(button)
+  const controls = selector.split(",").map((s) => s.trim()).filter(Boolean)
+    .map((s) => document.querySelector(s)).filter((node): node is Element => Boolean(node))
+  const control = controls[0]
+  const toolbar = control?.parentElement
+  const header = toolbar?.parentElement ?? document.querySelector("header, .header")
+  if (!header) return
+
+  let row = document.getElementById("tdoc-export-row")
+  if (!row) {
+    row = document.createElement("div")
+    row.id = "tdoc-export-row"
+    row.className = "tdoc-export-row"
+    if (toolbar && toolbar.parentElement === header) toolbar.insertAdjacentElement("afterend", row)
+    else header.append(row)
   }
+  row.append(button)
+  button.classList.remove("tdoc-export-floating")
+
+  const search = document.querySelector(".search")
+  const heightSource = search ?? control
+  const measuredHeight = heightSource?.getBoundingClientRect().height
+  row.style.setProperty("--tdoc-export-height", measuredHeight && measuredHeight > 0 ? measuredHeight + "px" : "40px")
 }
 
 function injectStyles() {
@@ -108,13 +119,13 @@ function injectStyles() {
   const style = document.createElement("style")
   style.id = "tdoc-export-styles"
   style.textContent = `
-    .tdoc-export-trigger{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
-      border:1px solid var(--lightgray);border-radius:8px;padding:.4rem .6rem;
-      background:var(--light);color:var(--dark);cursor:pointer;font:inherit;font-size:.9rem}
+    .tdoc-export-row{display:block;box-sizing:border-box;width:100%;flex:0 0 100%;clear:both;margin-top:.5rem}
+    .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
+      align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
+      border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
+      cursor:pointer;font:inherit;font-size:.9rem}
     .tdoc-export-trigger:hover{background:var(--highlight);border-color:var(--secondary)}
     .tdoc-export-trigger img{width:18px;height:18px;object-fit:contain}
-    .tdoc-export-trigger.tdoc-export-floating{position:fixed;right:1rem;bottom:1rem;z-index:9999;
-      box-shadow:0 3px 14px #0003}
     .tdoc-export-backdrop{position:fixed;inset:0;z-index:10000;background:#0008;display:grid;
       place-items:center;padding:1rem}
     .tdoc-export-dialog{box-sizing:border-box;width:min(780px,96vw);max-height:90vh;overflow:auto;
@@ -137,7 +148,7 @@ function injectStyles() {
     .tdoc-export-close{float:right;border:0;background:transparent;color:var(--dark);
       font-size:1.4rem;cursor:pointer}
     .tdoc-export-status{min-height:1.3em;margin-top:.6rem;color:var(--secondary);font-size:.9rem}
-    @media(max-width:600px){.tdoc-export-trigger span{display:none}.tdoc-export-dialog{padding:.9rem}}
+    @media(max-width:600px){.tdoc-export-dialog{padding:.9rem}}
   `
   document.head.append(style)
 }
