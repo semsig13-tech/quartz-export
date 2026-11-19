@@ -94,14 +94,13 @@ function mountButton(button: HTMLButtonElement, selector: string) {
     .map((s) => document.querySelector(s)).filter((node): node is Element => Boolean(node))
   if (!controls.length) return
 
-  // Find the nearest shared layout container that contains search, theme and
-  // reader controls. Keep the export row inside this toolbar so it can wrap
-  // onto its own full-width line instead of becoming a sibling in the sidebar grid.
-  let container: Element | null = controls[0].parentElement
-  while (container && !controls.every((control) => container!.contains(control))) {
-    container = container.parentElement
-  }
-  if (!container) return
+  const sidebar = controls[0].closest(".sidebar.left") ?? controls[0].closest("aside")
+  if (!sidebar) return
+
+  // Keep the export row OUTSIDE the horizontal toolbar. Quartz uses a
+  // horizontal sidebar layout on mobile, so the row is forced to wrap below it.
+  const toolbar = controls[0].closest(".flex-component") ?? controls[0].parentElement
+  if (!toolbar || !sidebar.contains(toolbar)) return
 
   let row = document.getElementById("tdoc-export-row") as HTMLDivElement | null
   if (!row) {
@@ -109,15 +108,15 @@ function mountButton(button: HTMLButtonElement, selector: string) {
     row.id = "tdoc-export-row"
     row.className = "tdoc-export-row"
   }
-  if (row.parentElement !== container || row !== container.lastElementChild) {
-    container.append(row)
+  if (row.parentElement !== sidebar) {
+    toolbar.insertAdjacentElement("afterend", row)
   }
+  if (row.parentElement !== sidebar) sidebar.append(row)
   if (button.parentElement !== row) row.append(button)
   button.classList.remove("tdoc-export-floating")
 
   const search = document.querySelector(".search")
-  const heightSource = search ?? controls[0]
-  const measuredHeight = heightSource.getBoundingClientRect().height
+  const measuredHeight = (search ?? controls[0]).getBoundingClientRect().height
   row.style.setProperty("--tdoc-export-height", measuredHeight > 0 ? measuredHeight + "px" : "40px")
 }
 function injectStyles() {
@@ -126,7 +125,12 @@ function injectStyles() {
   style.id = "tdoc-export-styles"
   style.textContent = `
     .tdoc-export-row{display:block;position:relative;box-sizing:border-box;width:100%;max-width:100%;
-      flex:0 0 100%;min-width:0;clear:both;margin:.5rem 0 0;align-self:stretch;order:999}
+      flex:0 0 100% !important;min-width:0;clear:both;margin:.5rem 0 0;align-self:stretch;order:999}
+    .sidebar.left > #tdoc-export-row{width:100% !important;max-width:100% !important;flex-basis:100% !important}
+    @media all and (max-width:800px){
+      .sidebar.left{flex-wrap:wrap !important;align-items:center}
+      .sidebar.left > #tdoc-export-row{flex:0 0 100% !important;width:100% !important;max-width:100% !important}
+    }
     .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
       align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
       border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
