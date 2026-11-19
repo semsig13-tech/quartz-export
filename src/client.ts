@@ -162,7 +162,19 @@ function injectStyles() {
     .tdoc-export-close{float:right;border:0;background:transparent;color:var(--dark);
       font-size:1.4rem;cursor:pointer}
     .tdoc-export-status{min-height:1.3em;margin-top:.6rem;color:var(--secondary);font-size:.9rem}
-    @media(max-width:600px){.tdoc-export-dialog{padding:.9rem}}
+    @media(max-width:600px){
+      .tdoc-export-dialog{padding:.9rem}
+      /* On phones, keep search, theme, reader mode and export in one compact row. */
+      .sidebar.left > .flex-component{flex-wrap:nowrap !important;align-items:center;gap:.35rem}
+      .sidebar.left > .flex-component > #tdoc-export-row{
+        display:flex;flex:0 0 40px !important;width:40px !important;max-width:40px !important;
+        min-width:40px;margin:0;order:999;align-items:center;justify-content:center
+      }
+      #tdoc-export-button{width:40px;height:var(--tdoc-export-height,40px);min-width:40px;
+        padding:0;gap:0;flex:0 0 40px;justify-content:center}
+      #tdoc-export-button span{display:none}
+      #tdoc-export-button img{width:20px;height:20px}
+    }
   `
   document.head.append(style)
 }
