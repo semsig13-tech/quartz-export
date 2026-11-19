@@ -105,6 +105,7 @@ function mountButton(button: HTMLButtonElement, selector: string) {
   // vertical flex sizing: a 100% flex-basis here would push the Explorer away.
   const toolbar = controls[0].closest(".flex-component")
   if (!toolbar || !controls.every((control) => toolbar.contains(control))) return
+  toolbar.id = "tdoc-export-toolbar"
 
   let row = document.getElementById("tdoc-export-row") as HTMLDivElement | null
   if (!row) {
@@ -125,17 +126,13 @@ function injectStyles() {
   const style = document.createElement("style")
   style.id = "tdoc-export-styles"
   style.textContent = `
-    .sidebar.left > .flex-component{display:flex;flex-direction:row;flex-wrap:wrap !important;
+    #tdoc-export-toolbar{display:flex;flex-direction:row;flex-wrap:wrap !important;
       box-sizing:border-box;width:100%;max-width:100%;min-width:0}
-    .sidebar.left > .flex-component > #tdoc-export-row{display:block;position:relative;
+    #tdoc-export-toolbar > #tdoc-export-row{display:block;position:relative;
       box-sizing:border-box;width:100% !important;max-width:100% !important;min-width:0;
       flex:0 0 100% !important;order:999;margin:.5rem 0 0}
     .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
       min-width:0;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
-      border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
-      cursor:pointer;font:inherit;font-size:.9rem}
-    .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
-      align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
       border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
       cursor:pointer;font:inherit;font-size:.9rem}
     .tdoc-export-trigger:hover{background:var(--highlight);border-color:var(--secondary)}
@@ -162,18 +159,19 @@ function injectStyles() {
     .tdoc-export-close{float:right;border:0;background:transparent;color:var(--dark);
       font-size:1.4rem;cursor:pointer}
     .tdoc-export-status{min-height:1.3em;margin-top:.6rem;color:var(--secondary);font-size:.9rem}
-    @media(max-width:600px){
+    @media(max-width:800px){
       .tdoc-export-dialog{padding:.9rem}
-      /* On phones, keep search, theme, reader mode and export in one compact row. */
-      .sidebar.left > .flex-component{flex-wrap:nowrap !important;align-items:center;gap:.35rem}
-      .sidebar.left > .flex-component > #tdoc-export-row{
+      /* Compact toolbar: search, theme, reader mode and export share one line. */
+      #tdoc-export-toolbar{flex-wrap:nowrap !important;align-items:center;gap:.3rem}
+      #tdoc-export-toolbar .search{flex:1 1 0 !important;width:auto !important;min-width:0 !important}
+      #tdoc-export-toolbar > #tdoc-export-row{
         display:flex;flex:0 0 40px !important;width:40px !important;max-width:40px !important;
         min-width:40px;margin:0;order:999;align-items:center;justify-content:center
       }
-      #tdoc-export-button{width:40px;height:var(--tdoc-export-height,40px);min-width:40px;
-        padding:0;gap:0;flex:0 0 40px;justify-content:center}
-      #tdoc-export-button span{display:none}
-      #tdoc-export-button img{width:20px;height:20px}
+      #tdoc-export-button{display:flex;width:40px;height:var(--tdoc-export-height,40px);
+        min-width:40px;max-width:40px;padding:0;gap:0;flex:0 0 40px;justify-content:center}
+      #tdoc-export-button span{display:none !important}
+      #tdoc-export-button img{display:block;width:20px;height:20px;object-fit:contain}
     }
   `
   document.head.append(style)
