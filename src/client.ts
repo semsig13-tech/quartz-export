@@ -94,13 +94,10 @@ function mountButton(button: HTMLButtonElement, selector: string) {
     .map((s) => document.querySelector(s)).filter((node): node is Element => Boolean(node))
   if (!controls.length) return
 
-  const sidebar = controls[0].closest(".sidebar.left") ?? controls[0].closest("aside")
-  if (!sidebar) return
-
-  // Keep the export row OUTSIDE the horizontal toolbar. Quartz uses a
-  // horizontal sidebar layout on mobile, so the row is forced to wrap below it.
-  const toolbar = controls[0].closest(".flex-component") ?? controls[0].parentElement
-  if (!toolbar || !sidebar.contains(toolbar)) return
+  // The controls are children of Quartz's Flex component. Put the export row
+  // INSIDE that component, so it participates in its own second flex line.
+  const toolbar = controls[0].closest(".flex-component")
+  if (!toolbar || !controls.every((control) => toolbar.contains(control))) return
 
   let row = document.getElementById("tdoc-export-row") as HTMLDivElement | null
   if (!row) {
@@ -108,10 +105,7 @@ function mountButton(button: HTMLButtonElement, selector: string) {
     row.id = "tdoc-export-row"
     row.className = "tdoc-export-row"
   }
-  if (row.parentElement !== sidebar) {
-    toolbar.insertAdjacentElement("afterend", row)
-  }
-  if (row.parentElement !== sidebar) sidebar.append(row)
+  if (row.parentElement !== toolbar) toolbar.append(row)
   if (button.parentElement !== row) row.append(button)
   button.classList.remove("tdoc-export-floating")
 
@@ -124,13 +118,15 @@ function injectStyles() {
   const style = document.createElement("style")
   style.id = "tdoc-export-styles"
   style.textContent = `
-    .tdoc-export-row{display:block;position:relative;box-sizing:border-box;width:100%;max-width:100%;
-      flex:0 0 100% !important;min-width:0;clear:both;margin:.5rem 0 0;align-self:stretch;order:999}
-    .sidebar.left > #tdoc-export-row{width:100% !important;max-width:100% !important;flex-basis:100% !important}
-    @media all and (max-width:800px){
-      .sidebar.left{flex-wrap:wrap !important;align-items:center}
-      .sidebar.left > #tdoc-export-row{flex:0 0 100% !important;width:100% !important;max-width:100% !important}
-    }
+    .sidebar.left .flex-component{display:flex;flex-direction:row;flex-wrap:wrap !important;
+      box-sizing:border-box;width:100%;max-width:100%;min-width:0;flex:0 0 100%}
+    .sidebar.left .flex-component > #tdoc-export-row{display:block;position:relative;
+      box-sizing:border-box;width:100% !important;max-width:100% !important;min-width:0;
+      flex:0 0 100% !important;order:999;margin:.5rem 0 0}
+    .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
+      min-width:0;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
+      border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
+      cursor:pointer;font:inherit;font-size:.9rem}
     .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
       align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
       border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
