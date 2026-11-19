@@ -170,7 +170,26 @@ function injectStyles() {
     .tdoc-export-dialog .tdoc-export-primary{
       border-color:#33856E;background:#33856E;color:#fff
     }
-    .tdoc-export-dialog input[type="checkbox"]{accent-color:#33856E}
+    /* Native form controls use the same TDOC accent as the action buttons. */
+    .tdoc-export-dialog select{
+      border:1px solid #33856E;border-radius:4px;accent-color:#33856E
+    }
+    .tdoc-export-dialog select option:checked{
+      background:#33856E;color:#fff
+    }
+    .tdoc-export-dialog input[type="checkbox"]{
+      appearance:none;-webkit-appearance:none;accent-color:#33856E;
+      width:16px;height:16px;min-width:16px;margin:0 5px 0 0;
+      border:1.5px solid #33856E;border-radius:3px;background:transparent;
+      display:inline-grid;place-content:center;vertical-align:middle;cursor:pointer
+    }
+    .tdoc-export-dialog input[type="checkbox"]:checked{
+      background:#33856E;border-color:#33856E
+    }
+    .tdoc-export-dialog input[type="checkbox"]:checked::after{
+      content:"";width:7px;height:4px;border:solid #fff;border-width:0 0 2px 2px;
+      transform:rotate(-45deg);margin-top:-2px
+    }
     .tdoc-export-dialog input[type="checkbox"]:focus-visible,
     .tdoc-export-dialog select:focus-visible,
     .tdoc-export-dialog button:focus-visible{
@@ -182,7 +201,9 @@ function injectStyles() {
     @media(max-width:800px){
       .tdoc-export-dialog{padding:.9rem}
       /* Compact toolbar: search, theme, reader mode and export share one line. */
-      #tdoc-export-toolbar{--tdoc-export-accent:#33856E;flex-wrap:nowrap !important;align-items:center}
+      #tdoc-export-toolbar{--tdoc-export-accent:#33856E;display:flex !important;
+        flex-direction:row !important;flex-wrap:nowrap !important;align-items:center;
+        justify-content:flex-start !important;column-gap:.5rem !important}
       #tdoc-export-toolbar .search{flex:1 1 0 !important;width:auto !important;min-width:0 !important}
       #tdoc-export-toolbar > #tdoc-export-row{
         display:flex;flex:0 0 40px !important;width:40px !important;max-width:40px !important;
