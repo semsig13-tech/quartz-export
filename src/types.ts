@@ -17,6 +17,8 @@ export interface ExportManifest {
 export interface TdocExportOptions {
   manifestPath?: string
   iconPath?: string
+  iconPathLight?: string
+  iconPathDark?: string
   toolbarSelector?: string
   explorerSelector?: string
   includeDrafts?: boolean
