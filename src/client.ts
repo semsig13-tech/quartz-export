@@ -158,15 +158,35 @@ function injectStyles() {
       flex-wrap:wrap;margin-top:1rem}
     .tdoc-export-close{float:right;border:0;background:transparent;color:var(--dark);
       font-size:1.4rem;cursor:pointer}
-    .tdoc-export-status{min-height:1.3em;margin-top:.6rem;color:var(--secondary);font-size:.9rem}
+    .tdoc-export-status{min-height:1.3em;margin-top:.6rem;color:#33856E;font-size:.9rem}
+    /* Consistent accent color for plugin actions and selection states. */
+    .tdoc-export-dialog{--tdoc-export-accent:#33856E}
+    .tdoc-export-dialog .tdoc-export-action{
+      border-color:#33856E;background:#33856E;color:#fff
+    }
+    .tdoc-export-dialog .tdoc-export-action:hover:not(:disabled){
+      border-color:#286b59;background:#286b59
+    }
+    .tdoc-export-dialog .tdoc-export-primary{
+      border-color:#33856E;background:#33856E;color:#fff
+    }
+    .tdoc-export-dialog input[type="checkbox"]{accent-color:#33856E}
+    .tdoc-export-dialog input[type="checkbox"]:focus-visible,
+    .tdoc-export-dialog select:focus-visible,
+    .tdoc-export-dialog button:focus-visible{
+      outline:2px solid #33856E;outline-offset:2px
+    }
+    .tdoc-export-dialog .tdoc-export-node:has(input[type="checkbox"]:checked){
+      background:color-mix(in srgb,#33856E 12%,transparent);border-radius:5px
+    }
     @media(max-width:800px){
       .tdoc-export-dialog{padding:.9rem}
       /* Compact toolbar: search, theme, reader mode and export share one line. */
-      #tdoc-export-toolbar{flex-wrap:nowrap !important;align-items:center;gap:.3rem}
+      #tdoc-export-toolbar{--tdoc-export-accent:#33856E;flex-wrap:nowrap !important;align-items:center}
       #tdoc-export-toolbar .search{flex:1 1 0 !important;width:auto !important;min-width:0 !important}
       #tdoc-export-toolbar > #tdoc-export-row{
         display:flex;flex:0 0 40px !important;width:40px !important;max-width:40px !important;
-        min-width:40px;margin:0;order:999;align-items:center;justify-content:center
+        min-width:40px;margin:0 !important;padding:0;order:999;align-items:center;justify-content:center
       }
       #tdoc-export-button{display:flex;width:40px;height:var(--tdoc-export-height,40px);
         min-width:40px;max-width:40px;padding:0;gap:0;flex:0 0 40px;justify-content:center;
