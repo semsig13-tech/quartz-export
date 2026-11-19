@@ -169,7 +169,8 @@ function injectStyles() {
         min-width:40px;margin:0;order:999;align-items:center;justify-content:center
       }
       #tdoc-export-button{display:flex;width:40px;height:var(--tdoc-export-height,40px);
-        min-width:40px;max-width:40px;padding:0;gap:0;flex:0 0 40px;justify-content:center}
+        min-width:40px;max-width:40px;padding:0;gap:0;flex:0 0 40px;justify-content:center;
+        border:0 !important;outline:0;box-shadow:none;background:transparent}
       #tdoc-export-button span{display:none !important}
       #tdoc-export-button img{display:block;width:20px;height:20px;object-fit:contain}
     }
