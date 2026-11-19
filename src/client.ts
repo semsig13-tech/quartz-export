@@ -13,6 +13,8 @@ declare global {
     __TDOC_EXPORT_CONFIG__?: {
       manifestPath: string
       iconPath: string
+      iconPathLight?: string
+      iconPathDark?: string
       toolbarSelector: string
       explorerSelector: string
       buttonLabel: string
@@ -53,8 +55,13 @@ async function boot(cfg: NonNullable<typeof config>) {
   button.title = "Экспортировать документы"
   const icon = document.createElement("img")
   icon.alt = ""
-  icon.src = cfg.iconPath
+  const updateIconForTheme = () => {
+    const theme = document.documentElement.getAttribute("saved-theme")
+    icon.src = theme === "dark" ? (cfg.iconPathDark ?? cfg.iconPath) : (cfg.iconPathLight ?? cfg.iconPath)
+  }
+  updateIconForTheme()
   icon.onerror = () => { icon.remove() }
+  document.addEventListener("themechange", updateIconForTheme)
   const label = document.createElement("span")
   label.textContent = cfg.buttonLabel
   button.append(icon, label)
@@ -94,8 +101,8 @@ function mountButton(button: HTMLButtonElement, selector: string) {
     .map((s) => document.querySelector(s)).filter((node): node is Element => Boolean(node))
   if (!controls.length) return
 
-  // The controls are children of Quartz's Flex component. Put the export row
-  // INSIDE that component, so it participates in its own second flex line.
+  // Only target the dedicated toolbar group. Do not change the sidebar's
+  // vertical flex sizing: a 100% flex-basis here would push the Explorer away.
   const toolbar = controls[0].closest(".flex-component")
   if (!toolbar || !controls.every((control) => toolbar.contains(control))) return
 
@@ -118,9 +125,9 @@ function injectStyles() {
   const style = document.createElement("style")
   style.id = "tdoc-export-styles"
   style.textContent = `
-    .sidebar.left .flex-component{display:flex;flex-direction:row;flex-wrap:wrap !important;
-      box-sizing:border-box;width:100%;max-width:100%;min-width:0;flex:0 0 100%}
-    .sidebar.left .flex-component > #tdoc-export-row{display:block;position:relative;
+    .sidebar.left > .flex-component{display:flex;flex-direction:row;flex-wrap:wrap !important;
+      box-sizing:border-box;width:100%;max-width:100%;min-width:0}
+    .sidebar.left > .flex-component > #tdoc-export-row{display:block;position:relative;
       box-sizing:border-box;width:100% !important;max-width:100% !important;min-width:0;
       flex:0 0 100% !important;order:999;margin:.5rem 0 0}
     .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
