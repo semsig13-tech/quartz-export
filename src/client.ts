@@ -93,19 +93,28 @@ function mountButton(button: HTMLButtonElement, selector: string) {
   const controls = selector.split(",").map((s) => s.trim()).filter(Boolean)
     .map((s) => document.querySelector(s)).filter((node): node is Element => Boolean(node))
   const control = controls[0]
-  const toolbar = control?.parentElement
-  const header = toolbar?.parentElement ?? document.querySelector("header, .header")
-  if (!header) return
+  if (!control) return
+
+  // Quartz renders the search, dark-mode and reader-mode controls in a
+  // horizontal toolbar. The export row must be a sibling of that toolbar
+  // inside the left sidebar, never a flex item inside the toolbar itself.
+  const sidebar = control.closest(".sidebar.left") ?? control.closest("aside")
+  if (!sidebar) return
+  const toolbar = control.closest(".flex-component") ?? control.parentElement
+  if (!toolbar) return
 
   let row = document.getElementById("tdoc-export-row")
   if (!row) {
     row = document.createElement("div")
     row.id = "tdoc-export-row"
     row.className = "tdoc-export-row"
-    if (toolbar && toolbar.parentElement === header) toolbar.insertAdjacentElement("afterend", row)
-    else header.append(row)
+    toolbar.insertAdjacentElement("afterend", row)
+  } else if (row.parentElement !== sidebar) {
+    sidebar.append(row)
   }
-  row.append(button)
+
+  if (row.parentElement !== sidebar) sidebar.append(row)
+  if (button.parentElement !== row) row.append(button)
   button.classList.remove("tdoc-export-floating")
 
   const search = document.querySelector(".search")
@@ -113,13 +122,12 @@ function mountButton(button: HTMLButtonElement, selector: string) {
   const measuredHeight = heightSource?.getBoundingClientRect().height
   row.style.setProperty("--tdoc-export-height", measuredHeight && measuredHeight > 0 ? measuredHeight + "px" : "40px")
 }
-
 function injectStyles() {
   if (document.getElementById("tdoc-export-styles")) return
   const style = document.createElement("style")
   style.id = "tdoc-export-styles"
   style.textContent = `
-    .tdoc-export-row{display:block;box-sizing:border-box;width:100%;flex:0 0 100%;clear:both;margin-top:.5rem}
+    .tdoc-export-row{display:block;position:relative;box-sizing:border-box;width:100%;max-width:100%;flex:0 0 100%;clear:both;margin:.5rem 0 0;align-self:stretch;order:2}
     .tdoc-export-trigger{display:flex;box-sizing:border-box;width:100%;height:var(--tdoc-export-height,40px);
       align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--lightgray);
       border-radius:8px;padding:.4rem .6rem;background:var(--light);color:var(--dark);
