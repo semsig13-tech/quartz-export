@@ -186,9 +186,20 @@ function injectStyles() {
     .tdoc-export-dialog input[type="checkbox"]:checked{
       background:#33856E;border-color:#33856E
     }
+    .tdoc-export-dialog input[type="checkbox"]{
+      position:relative;box-sizing:border-box;flex:0 0 16px;margin:0;
+      vertical-align:middle
+    }
     .tdoc-export-dialog input[type="checkbox"]:checked::after{
-      content:"";width:7px;height:4px;border:solid #fff;border-width:0 0 2px 2px;
-      transform:rotate(-45deg);margin-top:-2px
+      content:"";position:absolute;left:50%;top:50%;width:7px;height:4px;
+      border:solid #fff;border-width:0 0 2px 2px;
+      transform:translate(-50%,-60%) rotate(-45deg);margin:0
+    }
+    .tdoc-export-dialog .tdoc-export-node{
+      display:flex;align-items:center;gap:.5rem
+    }
+    .tdoc-export-dialog .tdoc-export-node input[type="checkbox"]{
+      align-self:center;justify-self:center
     }
     .tdoc-export-dialog input[type="checkbox"]:focus-visible,
     .tdoc-export-dialog select:focus-visible,
@@ -207,7 +218,8 @@ function injectStyles() {
       #tdoc-export-toolbar .search{flex:1 1 0 !important;width:auto !important;min-width:0 !important}
       #tdoc-export-toolbar > #tdoc-export-row{
         display:flex;flex:0 0 40px !important;width:40px !important;max-width:40px !important;
-        min-width:40px;margin:0 !important;padding:0;order:999;align-items:center;justify-content:center
+        min-width:40px;margin:0 !important;padding:0;order:999;align-items:center;justify-content:center;
+        transform:translateX(-10px)
       }
       #tdoc-export-button{display:flex;width:40px;height:var(--tdoc-export-height,40px);
         min-width:40px;max-width:40px;padding:0;gap:0;flex:0 0 40px;justify-content:center;
