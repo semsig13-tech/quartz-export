@@ -7,6 +7,8 @@ import type { TdocExportOptions, ExportManifest, ExportDocument } from "./types.
 const DEFAULTS: Required<TdocExportOptions> = {
   manifestPath: "static/tdoc-export-index.json",
   iconPath: "static/tdoc-export.svg",
+  iconPathLight: "static/tdoc-export-light.svg",
+  iconPathDark: "static/tdoc-export-dark.svg",
   toolbarSelector: ".search, .darkmode, .readermode",
   explorerSelector: ".explorer",
   includeDrafts: false,
@@ -29,6 +31,8 @@ function sitePath(baseUrl: string, relativePath: string): string {
 function makeClientConfig(baseUrl: string, options: {
   manifestPath: string
   iconPath: string
+  iconPathLight: string
+  iconPathDark: string
   toolbarSelector: string
   explorerSelector: string
   buttonLabel: string
@@ -39,6 +43,8 @@ function makeClientConfig(baseUrl: string, options: {
   return {
     manifestPath: sitePath(baseUrl, options.manifestPath),
     iconPath: sitePath(baseUrl, options.iconPath),
+    iconPathLight: sitePath(baseUrl, options.iconPathLight),
+    iconPathDark: sitePath(baseUrl, options.iconPathDark),
     toolbarSelector: options.toolbarSelector,
     explorerSelector: options.explorerSelector,
     buttonLabel: options.buttonLabel,
@@ -52,6 +58,8 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
   const options = { ...DEFAULTS, ...userOptions }
   const manifestPath = safeAssetPath(options.manifestPath, DEFAULTS.manifestPath)
   const iconPath = safeAssetPath(options.iconPath, DEFAULTS.iconPath)
+  const iconPathLight = safeAssetPath(options.iconPathLight, DEFAULTS.iconPathLight)
+  const iconPathDark = safeAssetPath(options.iconPathDark, DEFAULTS.iconPathDark)
   const cssPath = options.customCss ? safeAssetPath(options.customCss, DEFAULTS.customCss) : ""
   const themePath = options.themeXml ? safeAssetPath(options.themeXml, DEFAULTS.themeXml) : ""
 
@@ -105,6 +113,8 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
 
       await writeAsset(manifestPath, JSON.stringify(manifest))
       await copyAsset(path.join(pluginRoot, "../static/icon.svg"), iconPath)
+      await copyAsset(path.join(pluginRoot, "../static/icon-light.svg"), iconPathLight)
+      await copyAsset(path.join(pluginRoot, "../static/icon-dark.svg"), iconPathDark)
       if (cssPath) await copyAsset(path.join(pluginRoot, "../static/export.css"), cssPath)
       if (themePath) await copyAsset(path.join(pluginRoot, "../themes/export-theme.xml"), themePath)
       await copyAsset(path.join(pluginRoot, "../node_modules/katex/dist/katex.min.css"), "static/katex/katex.min.css")
@@ -123,7 +133,7 @@ export const TdocExport: QuartzEmitterPlugin<TdocExportOptions> = (userOptions =
       // Publish a self-contained browser script with the site-specific settings prepended.
       const clientBundle = await fs.readFile(path.join(pluginRoot, "client.js"), "utf8")
       const clientConfig = makeClientConfig(baseUrl, {
-        manifestPath, iconPath, toolbarSelector: options.toolbarSelector,
+        manifestPath, iconPath, iconPathLight, iconPathDark, toolbarSelector: options.toolbarSelector,
         explorerSelector: options.explorerSelector, buttonLabel: options.buttonLabel,
         customCss: cssPath, themeXml: themePath, mathCss: "static/katex/katex.min.css",
       })
